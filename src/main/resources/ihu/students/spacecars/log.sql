@@ -1,0 +1,100 @@
+CREATE TABLE CARSAUDIT(	OperationType VARCHAR(1) NOT NULL,
+        			OperationTimestamp TIMESTAMP NOT NULL,
+        			OperatorID VARCHAR NOT NULL,
+					CARID INTEGER NOT NULL,
+				    MAKE VARCHAR(255) NOT NULL,
+					MODEL VARCHAR(50) NOT NULL,
+					YEAR INTEGER NOT NULL,
+				    PRICE INTEGER NOT NULL,
+					PRIMARY KEY (CARID)
+				   );
+				  
+CREATE OR REPLACE FUNCTION process_cars_audit() RETURNS TRIGGER AS $$
+    BEGIN
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO CARSAUDIT SELECT 'D', now(), user, OLD.*;
+            RETURN OLD;
+        ELSEIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO CARSAUDIT SELECT 'U', now(), user, NEW.*;
+            RETURN NEW;
+        ELSEIF (TG_OP = 'INSERT') THEN
+            INSERT INTO CARSAUDIT SELECT 'I', now(), user, NEW.*;
+            RETURN NEW;
+        END IF;
+        RETURN NULL;
+    END;
+$$ LANGUAGE plpgsql;	
+
+CREATE TRIGGER cars_audit AFTER INSERT OR UPDATE OR DELETE ON CARS FOR EACH ROW EXECUTE PROCEDURE process_cars_audit();
+
+
+SELECT * FROM CARSAUDIT;
+
+CREATE TABLE CUSTOMERSAUDIT(OperationType VARCHAR(1) NOT NULL,
+        			OperationTimestamp TIMESTAMP NOT NULL,
+        			OperatorID VARCHAR NOT NULL,
+					FULLNAME VARCHAR(50)  NOT NULL,
+				    PHONE VARCHAR(15) NOT NULL,
+					CUSTOMERCARID INTEGER REFERENCES CARS(CARID)
+				   );
+
+CREATE OR REPLACE FUNCTION process_customers_audit() RETURNS TRIGGER AS $$
+    BEGIN
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO CUSTOMERSAUDIT SELECT 'D', now(), user, OLD.*;
+            RETURN OLD;
+        ELSEIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO CUSTOMERSAUDIT SELECT 'U', now(), user, NEW.*;
+            RETURN NEW;
+        ELSEIF (TG_OP = 'INSERT') THEN
+            INSERT INTO CUSTOMERSAUDIT SELECT 'I', now(), user, NEW.*;
+            RETURN NEW;
+        END IF;
+        RETURN NULL;
+    END;
+$$ LANGUAGE plpgsql;	
+
+CREATE TRIGGER customers_audit AFTER INSERT OR UPDATE OR DELETE ON CUSTOMERS FOR EACH ROW EXECUTE PROCEDURE process_customers_audit();  
+
+SELECT * FROM CUSTOMERSAUDIT;
+
+CREATE TABLE EMPLOYEESAUDIT(OperationType VARCHAR(1) NOT NULL,
+        			OperationTimestamp TIMESTAMP NOT NULL,
+        			OperatorID VARCHAR NOT NULL,
+					FULLNAME VARCHAR(50)  NOT NULL,
+					AGE INTEGER NOT NULL,   
+				    PHONE VARCHAR(15) NOT NULL,
+					CATEGORY VARCHAR(255) NOT NULL	
+				   );
+
+CREATE OR REPLACE FUNCTION process_employees_audit() RETURNS TRIGGER AS $$
+    BEGIN
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO EMPLOYEESAUDIT SELECT 'D', now(), user, OLD.*;
+            RETURN OLD;
+        ELSEIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO EMPLOYEESAUDIT SELECT 'U', now(), user, NEW.*;
+            RETURN NEW;
+        ELSEIF (TG_OP = 'INSERT') THEN
+            INSERT INTO EMPLOYEESAUDIT SELECT 'I', now(), user, NEW.*;
+            RETURN NEW;
+        END IF;
+        RETURN NULL;
+    END;
+$$ LANGUAGE plpgsql;	
+
+
+CREATE TRIGGER employees_audit AFTER INSERT OR UPDATE OR DELETE ON EMPLOYEES FOR EACH ROW EXECUTE PROCEDURE process_employees_audit();
+
+
+SELECT * FROM EMPLOYEESAUDIT; 
+
+
+
+
+
+
+
+
+
+    
